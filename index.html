@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/p5@0.10.2/lib/p5.js"></script>
+</head>
+
+<body>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // This code conencts to the node js server, and grabs the data
+        // for use in the sketch below
+        Number.prototype.map = function (in_min, in_max, out_min, out_max) {
+            return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+        }
+        // Socket is the library we use to connect this webpage
+        // to the server in node js
+        var socket = io();
+        var sensorValues = [];
+        
+        socket.on('data', (data) => {
+            var values = data;
+            values = values.split('	');
+            values = values.map(v => parseInt(v));
+
+            sensorValues = values.map(v =>
+                // Mapping the range of the keyboard values to color values
+                Math.floor(v.map(0, 1023, 0, 255))
+            );
+        })
+    </script>
+
+    <script>
+        // p5 js, edit here!
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+        }
+
+        // Position of the cursor
+        var xPos = 0;
+
+        function draw() {
+
+            // IGNORE THIS
+            var sortedValues = [...sensorValues];
+            sortedValues = sortedValues.sort(function(a, b) {
+                return a - b;
+            });
+            var i = sensorValues.findIndex(v => v === sortedValues[0]);
+            var pressure = Math.max((150 - sensorValues[i]), 0) / 150;
+
+            if(pressure <= 0) return;
+            if(isNaN(pressure)) return;
+
+            // var keyboard = "1234567890qwertyuiopasdfghjkl/zxcvbnm";
+            // TO HERE
+
+            const a = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']; 
+            const b = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '\n']; 
+            const c = ['\n', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '?', '\n'];
+            const keyboard = a.concat(b,c);
+
+
+            // IMPORTANT!
+            // This key variable, contains the letter which has the most pressure
+            // var key = keyboard.charAt(i);
+            const key = keyboard[i];
+            console.log(key);
+
+            // Set the color to black
+            fill(0,0,0, 100 * pressure);
+            // Clear the background
+            background(255);
+            // Change the size of the font, to pressure * 500 (pressurse = 0...1)
+            textSize(pressure * 500);
+            // Text align center
+            textAlign(CENTER);
+            // Draw it onto the screen
+            text(key, width / 2, height / 2);
+
+            fill(0,0,0, 100 * pressure);
+
+            const max = Math.max(...sensorValues);
+            const min = Math.min(...sensorValues);
+            const result = sensorValues[i] / (max - min);
+            let from = color(218, 165, 32);
+            let to = color(72, 61, 139);
+            colorMode(RGB); // Try changing to HSB.
+            let interA = lerpColor(from, to, result);
+            fill(interA);
+            rect(0, 0, width, height);
+
+            // // THIS IS MY INTERPRETATION...
+            // // This is the max font size
+            // var maxFontSize = 100;
+            // // The greater the pressure, the larger the font
+            // var fontSize = maxFontSize * pressure;
+            // textSize(fontSize);
+
+            // // The greater the pressure, the darker the colour
+            // fill(0,0,0, 50 * pressure);
+            // // We move the cursor along with the pressure too
+            // xPos += pressure * 2;
+            // // Draw the text onto the screen. The % and / operators
+            // // mean the text is drawn on separate lines
+            // text(key, xPos % width, Math.floor(xPos / width) * 100 + 100);
+            // // My INTERP
+        }
+
+    </script>
+</body>
